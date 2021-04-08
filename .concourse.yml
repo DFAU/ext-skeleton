@@ -1,0 +1,121 @@
+resource_types:
+  - name: pull-request
+    type: docker-image
+    source:
+      repository: spatialbuzz/gitea-pull-request-resource
+
+resources:
+  - name: repo-pr
+    type: pull-request
+    icon: git
+    source:
+      uri: git@code.dfau.de:toujou/{{lowercase_projectname}}.git
+      private_token: ((code-dfau-de.private_token))
+      private_key: ((ssh-key.id_rsa))
+
+jobs:
+  - name: test-backend
+    serial: false
+    plan:
+      - get: workspace
+        resource: repo-pr
+        trigger: true
+      - put: repo-pr
+        params:
+          repository: workspace
+          status: pending
+          build_label: Backend Tests
+      - task: run-build
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: { repository: shippingdocker/php-composer, tag: 7.2 }
+          inputs:
+            - name: workspace
+          outputs:
+            - name: workspace
+          params:
+            COMPOSER_ALLOW_SUPERUSER: 1
+            COMPOSER_AUTH: ((github_com.composer_auth))
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                mkdir ~/.ssh/
+                echo "((ssh-key.id_rsa))" > ~/.ssh/id_rsa
+                chmod 700 ~/.ssh && chmod 600 ~/.ssh/*
+                touch ~/.ssh/known_hosts
+                ssh-keyscan git.dfau.de >> ~/.ssh/known_hosts
+                cd workspace
+                composer install
+      - task: run-codingstandards
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source: { repository: shippingdocker/php-composer, tag: 7.2 }
+          inputs:
+            - name: workspace
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                cd workspace
+                ./etc/scripts/checkCodingStandards.sh
+
+      - task: run-unit-tests
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source: {repository: amidos/dcind}
+          inputs:
+            - name: workspace
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                source /docker-lib.sh
+                start_docker
+                cd workspace
+                rm .Build/Web/typo3conf/ext/toujou_{{snake_case_projectname}}
+                ln -s "$(pwd)" ./.Build/Web/typo3conf/ext/toujou_{{snake_case_projectname}}
+                ./etc/scripts/runTests.sh -s unit
+
+      - task: run-functional-tests
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source: {repository: amidos/dcind}
+          inputs:
+            - name: workspace
+          run:
+            path: /bin/sh
+            args:
+              - -c
+              - |
+                source /docker-lib.sh
+                start_docker
+                cd workspace
+                rm .Build/Web/typo3conf/ext/toujou_{{snake_case_projectname}}
+                ln -s "$(pwd)" ./.Build/Web/typo3conf/ext/toujou_{{snake_case_projectname}}
+                ./etc/scripts/runTests.sh -s functional
+    on_failure:
+      put: repo-pr
+      params:
+        repository: workspace
+        status: failure
+        build_label: Backend Tests
+    on_success:
+      put: repo-pr
+      params:
+        repository: workspace
+        status: success
+        build_label: Backend Tests

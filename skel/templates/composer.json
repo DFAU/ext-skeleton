@@ -1,0 +1,51 @@
+{
+    "name": "toujou/{{lowercase_projectname}}",
+    "type": "typo3-cms-extension",
+    "description": "",
+    "license": "GPLv3",
+    "require": {
+        "php": ">=7.2 <7.5",
+        "typo3/cms-core": "^10.4"
+    },
+    "require-dev": {
+        "typo3/testing-framework": "^6.4.0",
+        "roave/security-advisories": "dev-master",
+        "dfau/coding-standard": "@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Toujou\\{{capitalized_projectname}}\\": "Classes/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Toujou\\{{capitalized_projectname}}\\Tests\\": "Tests"
+        }
+    },
+    "config": {
+        "vendor-dir": ".Build/vendor",
+        "bin-dir": ".Build/bin"
+    },
+    "extra": {
+        "typo3/cms": {
+            "cms-package-dir": "{$vendor-dir}/typo3/cms",
+            "web-dir": ".Build/Web",
+            "extension-key": "toujou_{{snake_case_projectname}}"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "TYPO3\\TestingFramework\\Composer\\ExtensionTestEnvironment::prepare"
+        ]
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://composer.typo3.org/"
+        },
+        {
+            "type": "vcs",
+            "url": "git@git.dfau.de:dfau/coding-standard.git"
+        }
+    ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "toujou/ext-skeleton",
+  "description": "skeleton for toujou extension",
+  "type": "project",
+  "license": "MIT",
+  "require": {
+    "php": "^7.3"
+  },
+  "scripts": {
+    "post-create-project-cmd": [
+      "php skel/post_create_project",
+      "composer install"
+    ]
+  }
+}
