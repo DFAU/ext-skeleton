@@ -16,4 +16,4 @@ To create a project with this skeleton simply use following command:
 
 E.g. 
 
-    composer create-project toujou/ext-skeleton hello-world
+    composer create-project toujou/ext-skeleton hello-world --repository="{\"url\": \"https://github.com/DFAU/ext-skeleton.git\", \"type\": \"vcs\"}" --stability=dev --remove-vcs
