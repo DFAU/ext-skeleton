@@ -6,7 +6,7 @@
 /.php_cs.cache
 /*.patch
 .Build/
-public
-vendor
+/public/
+/vendor/
 composer.lock
-etc/testing-docker/.env
+/etc/testing-docker/.env
