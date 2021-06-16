@@ -30,7 +30,7 @@ jobs:
           platform: linux
           image_resource:
             type: registry-image
-            source: { repository: shippingdocker/php-composer, tag: 7.2 }
+            source: { repository: shippingdocker/php-composer, tag: 7.3 }
           inputs:
             - name: workspace
           outputs:
@@ -55,7 +55,7 @@ jobs:
           platform: linux
           image_resource:
             type: registry-image
-            source: { repository: shippingdocker/php-composer, tag: 7.2 }
+            source: { repository: shippingdocker/php-composer, tag: 7.3 }
           inputs:
             - name: workspace
           run:

@@ -36,7 +36,7 @@ toujou_{{snake_case_projectname}} test runner. Execute unit test suite and some 
 Also used by travis-ci for test execution.
 Successfully tested with docker version 18.06.1-ce and docker-compose 1.21.2.
 Usage: $0 [options] [file]
-No arguments: Run all unit tests with PHP 7.4
+No arguments: Run all unit tests with PHP 7.3
 Options:
     -s <...>
         Specifies which test suite to run
@@ -44,9 +44,9 @@ Options:
             - composerValidate: "composer validate"
             - lint: PHP linting
             - unit (default): PHP unit tests
-    -p <7.4>
+    -p <7.3>
         Specifies the PHP minor version to be used
-            - 7.4 (default):use PHP 7.4
+            - 7.3 (default):use PHP 7.3
     -e "<phpunit options>"
         Only with -s unit
         Additional options to send to phpunit tests.
@@ -71,7 +71,7 @@ Options:
     -h
         Show this help.
 Examples:
-    # Run unit tests using PHP 7.4
+    # Run unit tests using PHP 7.3
     ./Build/Scripts/runTests.sh
     # Run unit tests using PHP  8 (not implemented yet)
     ./Build/Scripts/runTests.sh -p 8
@@ -94,7 +94,7 @@ cd ../testing-docker || exit 1
 # Option defaults
 ROOT_DIR=`readlink -f ${PWD}/../../`
 TEST_SUITE="unit"
-PHP_VERSION="7.4"
+PHP_VERSION="7.3"
 PHP_XDEBUG_ON=0
 PHP_XDEBUG_PORT=9000
 EXTRA_TEST_OPTIONS=""
