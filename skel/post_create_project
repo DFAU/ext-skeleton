@@ -26,6 +26,7 @@ echo PHP_EOL;
 replacePlaceholdersInProject($replaces);
 copySkeletonFiles();
 cleanup();
+fixScriptFilePermissions();
 
 echo PHP_EOL;
 printLine();
@@ -122,4 +123,10 @@ function rrmdir($dir)
         }
         rmdir($dir);
     }
+}
+
+
+function fixScriptFilePermissions(): void
+{
+    exec ("find ./etc/scripts -type f -exec chmod +x {} +");
 }
