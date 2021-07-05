@@ -12,6 +12,11 @@ resource_types:
     type: registry-image
     source:
       repository: spatialbuzz/gitea-pull-request-resource
+  - name: hangouts-resource
+    type: registry-image
+    source:
+      repository: cloudinn/concourse-hangouts-resource
+      tag: latest
   - &docker-in-docker
     name: docker-in-docker
     type: registry-image
@@ -31,6 +36,11 @@ resource_types:
       tag: latest
 
 resources:
+  - name: hangouts
+    type: hangouts-resource
+    source:
+      webhook_url: ((kowan-soko-toujou-systems.chat_webhook_url))
+      post_url: true
   - name: repo-pr
     type: pull-request
     icon: git
@@ -38,6 +48,14 @@ resources:
       uri: git@code.dfau.de:toujou/{{lowercase_projectname}}.git
       private_token: ((code-dfau-de.private_token))
       private_key: ((ssh-key.id_rsa))
+ - name: master-push
+   type: git
+   icon: git
+   source:
+     uri: git@code.dfau.de:toujou/{{lowercase_projectname}}.git
+     branch: master
+     private_token: ((code-dfau-de.private_token))
+     private_key: ((ssh-key.id_rsa))
 
 jobs:
   - name: run-tests-pr
@@ -153,3 +171,17 @@ jobs:
         repository: workspace
         status: success
         build_label: Backend Tests
+
+  - name: run-tests-master
+    serial: false
+    plan:
+      - get: workspace
+        resource: master-push
+        trigger: true
+      - *build
+      - in_parallel: *qa
+    on_failure:
+      try:
+        put: hangouts
+        params:
+          message: Broken tests on master!
