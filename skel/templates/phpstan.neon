@@ -1,0 +1,2 @@
+includes:
+  - .Build/vendor/dfau/coding-standard/phpstan.neon

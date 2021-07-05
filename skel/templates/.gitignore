@@ -2,7 +2,7 @@
 .DS_Store
 /*.dump
 /*.sql.gz
-/.phpunit.result.cache
+.phpunit.result.cache
 /.php_cs.cache
 /*.patch
 .Build/
