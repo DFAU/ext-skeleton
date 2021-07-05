@@ -7,7 +7,7 @@
 Require and install the plugin
 
     $ composer require toujou/{{lowercase_projectname}}
-    $ vendor/bin/typo3cms extension:install {{snake_case_projectname}}
+    $ vendor/bin/typo3cms extension:install toujou_{{snake_case_projectname}}
 
 ## Development
 
