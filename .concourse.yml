@@ -111,6 +111,32 @@ jobs:
                   - |
                     cd workspace
                     ./etc/scripts/checkCodingStandards.sh
+          - task: run-typoscript-lint
+            config:
+              platform: linux
+              image_resource: *php
+              inputs:
+                - name: workspace
+              run:
+                path: bash
+                args:
+                  - -c
+                  - |
+                    cd workspace
+                    ./.Build/bin/typo3-typoscript-lint
+          - task: run-yaml-lint
+            config:
+              platform: linux
+              image_resource: *php
+              inputs:
+                - name: workspace
+              run:
+                path: bash
+                args:
+                  - -c
+                  - |
+                    cd workspace
+                    ./.Build/bin/yaml-lint Configuration
           - task: run-unit-tests
             privileged: true
             config:
