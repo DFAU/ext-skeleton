@@ -92,7 +92,7 @@ cd "$THIS_SCRIPT_DIR" || exit 1
 cd ../testing-docker || exit 1
 
 # Option defaults
-ROOT_DIR=`readlink -f ${PWD}/../../`
+ROOT_DIR="$PWD/../.."
 TEST_SUITE="unit"
 PHP_VERSION="7.3"
 PHP_XDEBUG_ON=0
