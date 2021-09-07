@@ -48,14 +48,14 @@ resources:
       uri: git@code.dfau.de:toujou/{{lowercase_projectname}}.git
       private_token: ((code-dfau-de.private_token))
       private_key: ((ssh-key.id_rsa))
- - name: master-push
-   type: git
-   icon: git
-   source:
-     uri: git@code.dfau.de:toujou/{{lowercase_projectname}}.git
-     branch: master
-     private_token: ((code-dfau-de.private_token))
-     private_key: ((ssh-key.id_rsa))
+  - name: master-push
+    type: git
+    icon: git
+    source:
+      uri: git@code.dfau.de:toujou/{{lowercase_projectname}}.git
+      branch: master
+      private_token: ((code-dfau-de.private_token))
+      private_key: ((ssh-key.id_rsa))
 
 jobs:
   - name: run-tests-pr
