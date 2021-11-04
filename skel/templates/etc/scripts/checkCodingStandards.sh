@@ -7,7 +7,7 @@ if [ "0" != "$(echo $?)" ]; then
     exit 0
 fi
 
-SEPERATOR=" "
-FOLDERS=$(printf "${SEPERATOR}%s" "${FILTERED_FOLDERS[@]}")
+SEPARATOR=" "
+FOLDERS=$(printf "${SEPARATOR}%s" "${FILTERED_FOLDERS[@]}")
 
 .Build/bin/ecs check --no-progress-bar -n -c .Build/vendor/dfau/coding-standard/ecs.php $FOLDERS $@
