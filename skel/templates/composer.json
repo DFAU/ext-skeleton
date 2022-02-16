@@ -9,7 +9,6 @@
     },
     "require-dev": {
         "typo3/testing-framework": "^6.4.0",
-        "roave/security-advisories": "dev-latest",
         "dfau/coding-standard": "^1.0.0"
     },
     "autoload": {
