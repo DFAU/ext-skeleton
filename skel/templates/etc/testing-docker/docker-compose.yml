@@ -2,7 +2,7 @@ version: '2.3'
 services:
 
   mariadb10:
-    image: mariadb:10
+    image: mariadb:10.6
     environment:
       MYSQL_ROOT_PASSWORD: funcp
     tmpfs:
