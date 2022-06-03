@@ -23,7 +23,12 @@
     },
     "config": {
         "vendor-dir": ".Build/vendor",
-        "bin-dir": ".Build/bin"
+        "bin-dir": ".Build/bin",
+        "allow-plugins": {
+            "typo3/class-alias-loader": true,
+            "typo3/cms-composer-installers": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     },
     "extra": {
         "typo3/cms": {
@@ -36,11 +41,5 @@
         "post-autoload-dump": [
             "TYPO3\\TestingFramework\\Composer\\ExtensionTestEnvironment::prepare"
         ]
-    },
-    "repositories": [
-        {
-            "type": "composer",
-            "url": "https://composer.typo3.org/"
-        }
-    ]
+    }
 }
