@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Toujou\Eventsauce\Tests\Functional;
+namespace Toujou\{{capitalized_projectname}}\Tests\Functional;
 
 use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 

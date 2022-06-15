@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tojou\FormEngine\Tests\Unit;
+namespace Tojou\{{capitalized_projectname}}\Tests\Unit;
 
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
