@@ -37,7 +37,7 @@ Fix coding standard violations automatically
 
 ## Documentation
 
-Make `dockrun_t3rd available in current terminal
+Make `dockrun_t3rd` available in current terminal
 
     source <(docker run --rm t3docs/render-documentation show-shell-commands)
 
