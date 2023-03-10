@@ -61,9 +61,11 @@ jobs:
   - name: run-tests-pr
     serial: false
     plan:
-      - get: workspace
-        resource: repo-pr
-        trigger: true
+      - in_parallel:
+          - get: ci
+          - get: workspace
+            resource: repo-pr
+            trigger: true
       - put: repo-pr
         params:
           repository: workspace
@@ -105,7 +107,7 @@ jobs:
               command: |
                 mkdir -p ./.Build/Web/typo3conf/ext/ && ln -s "$(pwd)" ./.Build/Web/typo3conf/ext/toujou_{{snake_case_projectname}}
                 ./etc/scripts/runTests.sh -s unit -p 7.4
-          - task: run-unit-tests
+          - task: run-functional-tests
             privileged: true
             file: ci/tasks/docker-in-docker.yml
             vars:
