@@ -12,27 +12,17 @@ resource_types:
     type: registry-image
     source:
       repository: spatialbuzz/gitea-pull-request-resource
+  - name: git
+    type: registry-image
+    source:
+      repository: concourse/git-resource
+      tag: 1.14.5-alpine
+    defaults:
+      private_key: ((ssh-key.id_rsa))
   - name: hangouts-resource
     type: registry-image
     source:
       repository: cloudinn/concourse-hangouts-resource
-      tag: latest
-  - &docker-in-docker
-    name: docker-in-docker
-    type: registry-image
-    source:
-      repository: amidos/dcind
-  - &php-composer
-    name: php-composer
-    type: registry-image
-    source:
-      repository: shippingdocker/php-composer
-      tag: 7.3
-  - &php
-    name: php
-    type: registry-image
-    source:
-      repository: typo3gmbh/php73
       tag: latest
 
 resources:
@@ -41,6 +31,14 @@ resources:
     source:
       webhook_url: ((kowan-soko-toujou-systems.chat_webhook_url))
       post_url: true
+  - name: ci
+    type: git
+    icon: git
+    source:
+      uri: git@code.dfau.de:toujou/ci.git
+      branch: main
+      private_token: ((code-dfau-de.private_token))
+      private_key: ((ssh-key.id_rsa))
   - name: repo-pr
     type: pull-request
     icon: git
@@ -72,121 +70,49 @@ jobs:
           status: pending
           build_label: Backend Tests
       - &build
-        task: run-build
-        config:
-          platform: linux
-          image_resource: *php-composer
-          inputs:
-            - name: workspace
-          outputs:
-            - name: workspace
-          caches:
-            - path: "composer-cache"
-          params:
-            COMPOSER_ALLOW_SUPERUSER: 1
-            COMPOSER_AUTH: ((github_com.composer_auth))
-          run:
-            path: bash
-            args:
-              - -c
-              - |
-                export COMPOSER_CACHE_DIR=$(pwd)/composer-cache
-                mkdir ~/.ssh/
-                echo "((ssh-key.id_rsa))" > ~/.ssh/id_rsa
-                chmod 700 ~/.ssh && chmod 600 ~/.ssh/*
-                touch ~/.ssh/known_hosts
-                ssh-keyscan git.dfau.de >> ~/.ssh/known_hosts
-                cd workspace
-                composer self-update
-                composer install -n --no-progress
+        task: composer-install
+        file: ci/tasks/php-command-with-ssh.yml
+        vars:
+          phpversion: "7.4"
+          workdir: workspace
+          command: composer install -n --no-progress
+        params:
+          COMPOSER_AUTH: ((code-dfau-de.COMPOSER_AUTH))
       - in_parallel: &qa
           - task: run-codingstandards
-            config:
-              platform: linux
-              image_resource: *php
-              inputs:
-                - name: workspace
-              run:
-                path: bash
-                args:
-                  - -c
-                  - |
-                    cd workspace
-                    ./etc/scripts/checkCodingStandards.sh
+            file: ci/tasks/php-command-with-ssh.yml
+            vars:
+              phpversion: "7.4"
+              workdir: workspace
+              command: ./etc/scripts/checkCodingStandards.sh
           - task: run-typoscript-lint
-            config:
-              platform: linux
-              image_resource: *php
-              inputs:
-                - name: workspace
-              run:
-                path: bash
-                args:
-                  - -c
-                  - |
-                    cd workspace
-                    ./.Build/bin/typo3-typoscript-lint
+            file: ci/tasks/php-command-with-ssh.yml
+            vars:
+              phpversion: "7.4"
+              workdir: workspace
+              command: ./.Build/bin/typo3-typoscript-lint
           - task: run-yaml-lint
-            config:
-              platform: linux
-              image_resource: *php
-              inputs:
-                - name: workspace
-              run:
-                path: bash
-                args:
-                  - -c
-                  - |
-                    cd workspace
-                    ./.Build/bin/yaml-lint Configuration
+            file: ci/tasks/php-command-with-ssh.yml
+            vars:
+              phpversion: "7.4"
+              workdir: workspace
+              command: ./.Build/bin/yaml-lint Configuration --parse-tags
           - task: run-unit-tests
             privileged: true
-            config:
-              platform: linux
-              image_resource: *docker-in-docker
-              inputs:
-                - name: workspace
-              params:
-                MIRROR_PASSWORD: ((kowan-soko-toujou-systems.password))
-                MIRROR_USERNAME: ((kowan-soko-toujou-systems.username))
-              run:
-                path: bash
-                args:
-                  - -c
-                  - |
-                    source /docker-lib.sh
-                    start_docker "" "https://kowan-soko.toujou.systems"
-                    echo $MIRROR_PASSWORD | docker login -u $MIRROR_USERNAME --password-stdin kowan-soko.toujou.systems
-                    sed -i 's!kowan-soko\.toujou\.systems!https://index\.docker\.io/v1/!' ~/.docker/config.json
-                    cat ~/.docker/config.json
-                    cd workspace
-                    rm .Build/Web/typo3conf/ext/toujou_{{snake_case_projectname}}
-                    ln -s "$(pwd)" ./.Build/Web/typo3conf/ext/toujou_{{snake_case_projectname}}
-                    ./etc/scripts/runTests.sh -s unit
-          - task: run-functional-tests
+            file: ci/tasks/docker-in-docker.yml
+            vars:
+              workdir: workspace
+              command: |
+                mkdir -p ./.Build/Web/typo3conf/ext/ && ln -s "$(pwd)" ./.Build/Web/typo3conf/ext/toujou_{{snake_case_projectname}}
+                ./etc/scripts/runTests.sh -s unit -p 7.4
+          - task: run-unit-tests
             privileged: true
-            config:
-              platform: linux
-              image_resource: *docker-in-docker
-              inputs:
-                - name: workspace
-              params:
-                MIRROR_PASSWORD: ((kowan-soko-toujou-systems.password))
-                MIRROR_USERNAME: ((kowan-soko-toujou-systems.username))
-              run:
-                path: bash
-                args:
-                  - -c
-                  - |
-                    source /docker-lib.sh
-                    start_docker "" "https://kowan-soko.toujou.systems"
-                    echo $MIRROR_PASSWORD | docker login -u $MIRROR_USERNAME --password-stdin kowan-soko.toujou.systems
-                    sed -i 's!kowan-soko\.toujou\.systems!https://index\.docker\.io/v1/!' ~/.docker/config.json
-                    cat ~/.docker/config.json
-                    cd workspace
-                    rm .Build/Web/typo3conf/ext/toujou_{{snake_case_projectname}}
-                    ln -s "$(pwd)" ./.Build/Web/typo3conf/ext/toujou_{{snake_case_projectname}}
-                    ./etc/scripts/runTests.sh -s functional
+            file: ci/tasks/docker-in-docker.yml
+            vars:
+              workdir: workspace
+              command: |
+                mkdir -p ./.Build/Web/typo3conf/ext/ && ln -s "$(pwd)" ./.Build/Web/typo3conf/ext/toujou_{{snake_case_projectname}}
+                ./etc/scripts/runTests.sh -s functional -p 7.4
     on_failure:
       put: repo-pr
       params:
@@ -203,9 +129,11 @@ jobs:
   - name: run-tests-master
     serial: false
     plan:
-      - get: workspace
-        resource: master-push
-        trigger: true
+      - in_parallel:
+          - get: ci
+          - get: workspace
+            resource: master-push
+            trigger: true
       - *build
       - in_parallel: *qa
     on_failure:
