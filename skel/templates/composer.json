@@ -4,8 +4,8 @@
     "description": "",
     "license": "GPLv3",
     "require": {
-        "php": ">=7.3 <7.5",
-		"typo3/cms-core": "^10.4 | ^11.5"
+		"php": "^7.4 | ^8.0",
+		"typo3/cms-core": "^11.5"
 	},
     "require-dev": {
         "typo3/testing-framework": "^6.4.0",
@@ -41,5 +41,10 @@
         "post-autoload-dump": [
             "TYPO3\\TestingFramework\\Composer\\ExtensionTestEnvironment::prepare"
         ]
-    }
+    },
+	"repositories": [
+		{"type": "composer", "url": "https://toujou-repo.kodzutsumi-senta.toujou.systems"},
+		{"type": "composer", "url": "https://repo.kodzutsumi-senta.toujou.systems"},
+		{"packagist": false}
+	]
 }
