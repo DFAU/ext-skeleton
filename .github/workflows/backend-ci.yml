@@ -1,0 +1,55 @@
+name: Backend-CI
+
+on: [ push, pull_request ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: [ '7.4', '8.1' ]
+        include:
+          - php: '7.4'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up PHP version ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: composer:v2, php-cs-fixer
+
+      - name: Environment Check
+        run: |
+          php --version
+          composer --version
+
+      - name: Validate composer.json and composer.lock
+        run: composer validate
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@v2
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH }}
+          COMPOSER_POOL_OPTIMIZER: 0
+
+      - name: Info
+        run: composer info
+
+      - name: Check coding standards
+        run: ./etc/scripts/checkCodingStandards.sh
+
+      - name: Lint typoscript
+        run: ./.Build/bin/typo3-typoscript-lint
+
+      - name: Lint yaml
+        run: ./.Build/bin/yaml-lint Configuration --parse-tags
+
+      - name: Run unit tests
+        run: ./etc/scripts/runTests.sh -s unit -p ${{ matrix.php }}
+
+      - name: Run functional tests
+        run: ./etc/scripts/runTests.sh -s functional -p ${{ matrix.php }}
