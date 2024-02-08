@@ -33,18 +33,3 @@ Check coding standard violations
 Fix coding standard violations automatically
 
     $ etc/scripts/checkCodingStandards.sh --fix
-
-
-## Documentation
-
-Make `dockrun_t3rd` available in current terminal
-
-    source <(docker run --rm t3docs/render-documentation show-shell-commands)
-
-Run `dockrun_t3rd`
-
-    dockrun_t3rd makehtml
-
-Open documentation
-
-    open "Documentation-GENERATED-temp/Result/project/0.0.0/Index.html"

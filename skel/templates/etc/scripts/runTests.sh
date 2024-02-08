@@ -36,7 +36,7 @@ toujou_{{snake_case_projectname}} test runner. Execute unit test suite and some 
 Also used by travis-ci for test execution.
 Successfully tested with docker version 18.06.1-ce and docker-compose 1.21.2.
 Usage: $0 [options] [file]
-No arguments: Run all unit tests with PHP 7.3
+No arguments: Run all unit tests with PHP 8.1
 Options:
     -s <...>
         Specifies which test suite to run
@@ -44,9 +44,9 @@ Options:
             - composerValidate: "composer validate"
             - lint: PHP linting
             - unit (default): PHP unit tests
-    -p <7.3>
+    -p <8.1>
         Specifies the PHP minor version to be used
-            - 7.3 (default):use PHP 7.3
+            - 8.1 (default):use PHP 8.1
     -e "<phpunit options>"
         Only with -s unit
         Additional options to send to phpunit tests.
@@ -71,7 +71,7 @@ Options:
     -h
         Show this help.
 Examples:
-    # Run unit tests using PHP 7.3
+    # Run unit tests using PHP 8.1
     ./Build/Scripts/runTests.sh
     # Run unit tests using PHP  8 (not implemented yet)
     ./Build/Scripts/runTests.sh -p 8
@@ -94,7 +94,7 @@ cd ../testing-docker || exit 1
 # Option defaults
 ROOT_DIR="$PWD/../.."
 TEST_SUITE="unit"
-PHP_VERSION="7.3"
+PHP_VERSION="8.1"
 PHP_XDEBUG_ON=0
 PHP_XDEBUG_PORT=9000
 EXTRA_TEST_OPTIONS=""
@@ -153,7 +153,7 @@ if [ ${#INVALID_OPTIONS[@]} -ne 0 ]; then
     exit 1
 fi
 
-# Move "7.3" to "php73", the latter is the docker container name
+# Move "8.1" to "php81", the latter is the docker container name
 DOCKER_PHP_IMAGE=`echo "php${PHP_VERSION}" | sed -e 's/\.//'`
 
 # Set $1 to first mass argument, this is the optional test file or test directory to execute
