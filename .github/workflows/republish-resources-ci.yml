@@ -2,7 +2,7 @@ name: Republish-Resources-CI
 
 on:
   push:
-    branches: [ 'master' ]
+    branches: [ 'main' ]
     paths:
       - 'Resources/Public/**'
       - '!Resources/Public/build/**'
