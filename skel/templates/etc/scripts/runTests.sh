@@ -23,8 +23,10 @@ setUpDockerComposeDotEnv() {
     echo "ROOT_DIR"=${ROOT_DIR} >> .env
     echo "HOST_USER=${USER}" >> .env
     echo "TEST_FILE=${TEST_FILE}" >> .env
+    echo "TYPO3_VERSION=${TYPO3_VERSION}" >> .env
     echo "PHP_XDEBUG_ON=${PHP_XDEBUG_ON}" >> .env
     echo "PHP_XDEBUG_PORT=${PHP_XDEBUG_PORT}" >> .env
+    echo "PHP_VERSION=${PHP_VERSION}" >> .env
     echo "DOCKER_PHP_IMAGE=${DOCKER_PHP_IMAGE}" >> .env
     echo "EXTRA_TEST_OPTIONS=${EXTRA_TEST_OPTIONS}" >> .env
     echo "SCRIPT_VERBOSE=${SCRIPT_VERBOSE}" >> .env
@@ -33,48 +35,70 @@ setUpDockerComposeDotEnv() {
 # Load help text into $HELP
 read -r -d '' HELP <<EOF
 toujou_{{snake_case_projectname}} test runner. Execute unit test suite and some other details.
-Also used by travis-ci for test execution.
-Successfully tested with docker version 18.06.1-ce and docker-compose 1.21.2.
+Also used by github actions for test execution.
+
 Usage: $0 [options] [file]
-No arguments: Run all unit tests with PHP 8.1
+
+No arguments: Run all unit tests with PHP 7.4
+
 Options:
     -s <...>
         Specifies which test suite to run
-            - composerInstall: "composer install", handy if host has no PHP, uses composer cache of users home
-            - composerValidate: "composer validate"
+            - composerUpdate: "composer update"
+            - clean: clean up build and testing related files
             - lint: PHP linting
             - unit (default): PHP unit tests
-    -p <8.1>
+            - functional: functional tests
+
+    -d <mariadb|postgres|sqlite>
+        Only with -s functional
+        Specifies on which DBMS tests are performed
+            - mariadb (default): use mariadb
+            - postgres: use postgres
+            - sqlite: use sqlite
+
+    -p <7.4|8.0|8.1|8.2>
         Specifies the PHP minor version to be used
-            - 8.1 (default):use PHP 8.1
+            - 7.4: (default) use PHP 7.4
+            - 8.0: use PHP 8.0
+            - 8.1: use PHP 8.1
+            - 8.2: use PHP 8.2
+
+    -t <11|12>
+        Only with -s composerUpdate
+        Specifies the TYPO3 core major version to be used
+            - 11: (default) use TYPO3 core v11
+            - 12: use TYPO3 core v12
+
     -e "<phpunit options>"
-        Only with -s unit
+        Only with -s functional|unit
         Additional options to send to phpunit tests.
         For phpunit, options starting with "--" must be added after options starting with "-".
         Example -e "-v --filter canRetrieveValueWithGP" to enable verbose output AND filter tests
         named "canRetrieveValueWithGP"
+
     -x
         Only with -s unit
         Send information to host instance for test or system under test break points. This is especially
-        useful if a local PhpStorm instance is listening on default xdebug port 9000. A different port
+        useful if a local PhpStorm instance is listening on default xdebug port 9003. A different port
         can be selected with -y
+
     -y <port>
-        Send xdebug information to a different port than default 9000 if an IDE like PhpStorm
+        Send xdebug information to a different port than default 9003 if an IDE like PhpStorm
         is not listening on default port.
+
     -u
         Update existing typo3gmbh/phpXY:latest docker images. Maintenance call to docker pull latest
         versions of the main php images. The images are updated once in a while and only the youngest
         ones are supported by core testing. Use this if weird test errors occur. Also removes obsolete
         image versions of typo3gmbh/phpXY.
+
     -v
         Enable verbose script output. Shows variables and docker commands.
+
     -h
         Show this help.
-Examples:
-    # Run unit tests using PHP 8.1
-    ./Build/Scripts/runTests.sh
-    # Run unit tests using PHP  8 (not implemented yet)
-    ./Build/Scripts/runTests.sh -p 8
+
 EOF
 
 # Test if docker-compose exists, else exit out with error
@@ -92,11 +116,13 @@ cd "$THIS_SCRIPT_DIR" || exit 1
 cd ../testing-docker || exit 1
 
 # Option defaults
-ROOT_DIR="$PWD/../.."
+ROOT_DIR=`realpath ${PWD}/../../`
 TEST_SUITE="unit"
-PHP_VERSION="8.1"
+DBMS="mariadb"
+PHP_VERSION="7.4"
+TYPO3_VERSION="11"
 PHP_XDEBUG_ON=0
-PHP_XDEBUG_PORT=9000
+PHP_XDEBUG_PORT=9003
 EXTRA_TEST_OPTIONS=""
 SCRIPT_VERBOSE=0
 
@@ -106,13 +132,19 @@ OPTIND=1
 # Array for invalid options
 INVALID_OPTIONS=();
 # Simple option parsing based on getopts (! not getopt)
-while getopts ":s:p:e:xy:huv" OPT; do
+while getopts ":s:d:p:t:e:xy:huv" OPT; do
     case ${OPT} in
         s)
             TEST_SUITE=${OPTARG}
             ;;
+        d)
+            DBMS=${OPTARG}
+            ;;
         p)
             PHP_VERSION=${OPTARG}
+            ;;
+        t)
+            TYPO3_VERSION=${OPTARG}
             ;;
         e)
             EXTRA_TEST_OPTIONS=${OPTARG}
@@ -153,22 +185,13 @@ if [ ${#INVALID_OPTIONS[@]} -ne 0 ]; then
     exit 1
 fi
 
-# Move "8.1" to "php81", the latter is the docker container name
+# Move "7.2" to "php72", the latter is the docker container name
 DOCKER_PHP_IMAGE=`echo "php${PHP_VERSION}" | sed -e 's/\.//'`
 
 # Set $1 to first mass argument, this is the optional test file or test directory to execute
 shift $((OPTIND - 1))
 if [ -n "${1}" ]; then
     TEST_FILE="Web/typo3conf/ext/toujou_{{snake_case_projectname}}/${1}"
-else
-    case ${TEST_SUITE} in
-        unit)
-            TEST_FILE="Web/typo3conf/ext/toujou_{{snake_case_projectname}}/Tests/Unit"
-            ;;
-        functional)
-            TEST_FILE="Web/typo3conf/ext/toujou_{{snake_case_projectname}}/Tests/Functional"
-            ;;
-    esac
 fi
 
 if [ ${SCRIPT_VERBOSE} -eq 1 ]; then
@@ -177,16 +200,47 @@ fi
 
 # Suite execution
 case ${TEST_SUITE} in
-    composerInstall)
+    clean)
+        rm -rf ../../composer.lock ../../.Build/ ../../composer.json.testing
+        ;;
+    composerUpdate)
         setUpDockerComposeDotEnv
-        docker-compose run composer_install
+        cp ../../composer.json ../../composer.json.orig
+        if [ -f "../../composer.json.testing" ]; then
+            cp ../../composer.json ../../composer.json.orig
+        fi
+        docker-compose run composer_update
+        cp ../../composer.json ../../composer.json.testing
+        mv ../../composer.json.orig ../../composer.json
         SUITE_EXIT_CODE=$?
         docker-compose down
         ;;
-    composerValidate)
+    functional)
         setUpDockerComposeDotEnv
-        docker-compose run composer_validate
-        SUITE_EXIT_CODE=$?
+        case ${DBMS} in
+            mariadb)
+                docker-compose run functional_mariadb10
+                SUITE_EXIT_CODE=$?
+                ;;
+            postgres)
+                docker-compose run functional_postgres10
+                SUITE_EXIT_CODE=$?
+                ;;
+            sqlite)
+                # sqlite has a tmpfs as .Build/Web/typo3temp/var/tests/functional-sqlite-dbs/
+                # Since docker is executed as root (yay!), the path to this dir is owned by
+                # root if docker creates it. Thank you, docker. We create the path beforehand
+                # to avoid permission issues.
+                mkdir -p ${ROOT_DIR}/.Build/Web/typo3temp/var/tests/functional-sqlite-dbs/
+                docker-compose run functional_sqlite
+                SUITE_EXIT_CODE=$?
+                ;;
+            *)
+                echo "Invalid -d option argument ${DBMS}" >&2
+                echo >&2
+                echo "${HELP}" >&2
+                exit 1
+        esac
         docker-compose down
         ;;
     lint)
@@ -201,18 +255,11 @@ case ${TEST_SUITE} in
         SUITE_EXIT_CODE=$?
         docker-compose down
         ;;
-
-    functional)
-        setUpDockerComposeDotEnv
-        docker-compose run functional_mariadb10
-        SUITE_EXIT_CODE=$?
-        docker-compose down
-        ;;
     update)
-        # pull typo3gmbh/phpXY:latest versions of those ones that exist locally
-        docker images typo3gmbh/php*:latest --format "{{.Repository}}:latest" | xargs -I {} docker pull {}
-        # remove "dangling" typo3gmbh/phpXY images (those tagged as <none>)
-        docker images typo3gmbh/php* --filter "dangling=true" --format "{{.ID}}" | xargs -I {} docker rmi {}
+        # pull typo3/core-testing-*:latest versions of those ones that exist locally
+        docker images typo3/core-testing-*:latest --format "{{.Repository}}:latest" | xargs -I {} docker pull {}
+        # remove "dangling" typo3/core-testing-* images (those tagged as <none>)
+        docker images typo3/core-testing-* --filter "dangling=true" --format "{{.ID}}" | xargs -I {} docker rmi {}
         ;;
     *)
         echo "Invalid -s option argument ${TEST_SUITE}" >&2
