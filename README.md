@@ -12,7 +12,7 @@ which will be installed to project root.
 
 To create a project with this skeleton simply use following command:
 
-    composer create-project toujou/ext-skeleton <projectname>
+    composer create-project toujou/ext-skeleton <projectname> --repository="{\"url\": \"https://github.com/DFAU/ext-skeleton.git\", \"type\": \"vcs\"}" --stability=dev --remove-vcs
 
 E.g. 
 
