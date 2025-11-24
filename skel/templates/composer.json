@@ -8,8 +8,9 @@
         "typo3/cms-core": "^12.4 || ^13.4"
     },
     "require-dev": {
-        "typo3/testing-framework": "^7.1.0",
-        "dfau/coding-standard": "^2.0.0"
+        "typo3/testing-framework": "^8.2.7",
+        "roave/security-advisories": "dev-latest",
+        "dfau/coding-standard": "^2.2.0"
     },
     "autoload": {
         "psr-4": {
