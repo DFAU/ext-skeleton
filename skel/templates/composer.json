@@ -42,8 +42,9 @@
         }
     },
     "repositories": [
-        {"type": "composer", "url": "https://toujou-repo.kodzutsumi-senta.toujou.systems"},
-        {"type": "composer", "url": "https://repo.kodzutsumi-senta.toujou.systems"},
-        {"packagist": false}
+        {
+            "type": "composer",
+            "url": "https://toujou-repo.kodzutsumi-senta.toujou.systems"
+        }
     ]
 }
