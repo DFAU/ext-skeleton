@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Tojou\{{capitalized_projectname}}\Tests\Unit;
 
+use PHPUnit\Framework\Attributes\Test;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
 
 class DummyTest extends UnitTestCase
 {
-    /**
-     * @test
-     */
+
+    #[Test]
     public function dummy(): void
     {
-        self::assertTrue(true);
+        $this->assertTrue(true);
     }
 }
